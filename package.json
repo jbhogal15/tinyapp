@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/jbhogal15/tinyapp/issues"
   },
-  "homepage": "https://github.com/jbhogal15/tinyapp#readme"
+  "homepage": "https://github.com/jbhogal15/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.3"
+  }
 }
