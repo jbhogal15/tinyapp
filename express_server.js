@@ -10,40 +10,47 @@ app.set("view engine", "ejs")
 
 
 //url Database
-const urlDatabase = {
-  "b2xVn2": {
-        longURL: "http://www.lighthouselabs.ca",
-        user_id: " "
-  },
+// const urlDatabase = {
+//   "b2xVn2": {
+//         longURL: "http://www.lighthouselabs.ca",
+//         user_id: " "
+//   },
 
-  "9sm5xK": {
-        longURL: "http://www.google.com",
-        user_id: " "
-  }
-};
+//   "9sm5xK": {
+//         longURL: "http://www.google.com",
+//         user_id: " "
+//   }
+// };
 
 //Users Database
-const users = { 
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
-  },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "dishwasher-funk"
-  }
-}
+// const users = { 
+//   "userRandomID": {
+//     id: "userRandomID", 
+//     email: "user@example.com", 
+//     password: "purple-monkey-dinosaur"
+//   },
+//  "user2RandomID": {
+//     id: "user2RandomID", 
+//     email: "user2@example.com", 
+//     password: "dishwasher-funk"
+//   }
+// }
 
+const urlDatabase = {};
+const users = {};
 
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const e = require("express");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
+const cookieSession = require("cookie-session");
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
+app.use(cookieSession({
+  name: "session",
+  keys: ["Fear is a tool, when that light hits the sky, it's not just a call, it's a warning!"]
+}))
 
 
 //Check if email is part of the users databse when logging in or registering
@@ -56,14 +63,14 @@ const emailUser = function(email, users) {
   return false;
 };
 
-//Check if passwords user is entering is matching the one we have stored
-const passwordCheck = function(password, users) {
+//FInd users password when provided with email address
+const userPassword = function(email, users) {
   for (const key in users) {
-    if (users[key].password === password) {
-      return true;
+    if (users[key].email === email) {
+      return users[key].password;
     }
   }
-  return false;
+  return undefined;
 };
 
 //Get user_id from email
@@ -99,7 +106,7 @@ app.get("/urls.json", (req, res) => {
 
 //
 app.get("/urls", (req, res) => {
-  const user_id =  req.cookies["user_id"];
+  const user_id =  req.session.user_id;
   const user = users[user_id];
   const userURLs = urlsForUser(user_id, urlDatabase);
   const templateVars = { urls: userURLs, user: user};
@@ -118,7 +125,7 @@ app.get("/register", (req, res) => {
 
 //
 app.get("/login", (req, res) => {
-  const user_id =  req.cookies["user_id"];
+  const user_id =  req.session.user_id;
   const user = users[user_id];
   const templateVars = { urls: urlDatabase, user: user};
   if(user_id) {
@@ -130,7 +137,7 @@ app.get("/login", (req, res) => {
 
 //
 app.get("/urls/new", (req, res) => {
-  const user_id =  req.cookies["user_id"];
+  const user_id =  req.session.user_id;
   const user = users[user_id];
   const templateVars = { urls: urlDatabase, user: user};
   if(user_id) {
@@ -142,7 +149,7 @@ app.get("/urls/new", (req, res) => {
 
 //
 app.get("/urls/:shortURL", (req, res) => {
-  const user_id =  req.cookies["user_id"];
+  const user_id =  req.session.user_id;
   const user = users[user_id];
   const userURLs = urlsForUser(user_id, urlDatabase)
   const shortURL = req.params.shortURL;
@@ -177,7 +184,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 //Submiting a new longURL and converting it to shortURL
 app.post("/urls", (req, res) => {
-  let user_id = req.cookies["user_id"]
+  let user_id = req.session.user_id;
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
@@ -189,7 +196,7 @@ app.post("/urls", (req, res) => {
 
 //delete
 app.post("/urls/:shortURL/delete", (req, res) => {
-  let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
   const user = users[user_id];
   let removeURL = req.params.shortURL;
   const userURLs = urlsForUser(user_id, urlDatabase);
@@ -204,7 +211,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 //edit
 app.post("/urls/:shortURL", (req, res) => {
-  let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
   const user = users[user_id];
   let newURL = req.body.newURL;
   const shortURL = req.params.shortURL;
@@ -231,33 +238,27 @@ app.post("/register", (req, res) => {
   } else if (emailUser(email, users)) {
       res.status(400).send("This email is already associated with an account.");
   } else {
-    users[user_id] = {id: user_id, email: email, password: password};
-    res.cookie("user_id", user_id);
+
+    users[user_id] = {
+      id: user_id, 
+      email: email, 
+      password: bcrypt.hashSync(password, 10)
+    };
+
+    req.session.user_id = user_id;
     res.redirect("/urls");
+    // console.log(users);
   }
 });
 
-//POST Login
-app.post("/login", (req, res) => {
-  let email = req.body.email;
-  let password = req.body.password;
-  if(!emailUser(email, users)) {
-    res.status(403).send("No account is registered with the provided email address")
-  } else if (emailUser(email, users) && !passwordCheck(password, users)) {
-    res.status(403).send("Incorrect password")          
-  } else {
-    let user_id = getUserId(email, users);
-    res.cookie("user_id", user_id);
-    res.redirect("/urls");
-  }
-});
-
+//
 app.post("/login", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
   let user_id = getUserId(email, users);
-  if (user_id && bcrypt.compareSync(password, users["user_id"].password)) {
-    res.cookie("user_id", user_id);
+  let inputPassword = userPassword(email, users);
+  if (user_id && bcrypt.compareSync(password, inputPassword)) {
+    req.session.user_id = user_id;
     res.redirect("/urls");
   } else {
     res.status(403).send("Invalid username and/or password")
