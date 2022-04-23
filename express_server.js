@@ -2,8 +2,6 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
-const urlDatabase = {};
-const users = {};
 const bodyParser = require("body-parser");
 const e = require("express");
 const bcrypt = require("bcryptjs");
@@ -14,24 +12,30 @@ app.use(cookieSession({
   name: "session",
   keys: ["Fear is a tool, when that light hits the sky, it's not just a call, it's a warning!"]
 }));
+const urlDatabase = {};
+const users = {};
 
 //Helper Functions
 const { generateRandomString, emailUser, userPassword, getUserByEmail, urlsForUser } = require('./helpers');
 
 
 
+//----------------------------------GET REQUESTS---------------------------------------
 
-//GET REQUESTS
+//GET request to the root page
+//If user is logged in it will redirect to /urls main index page, otherwise it will redirect to login page
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const user_Id = req.session.user_Id;
+  if (user_Id) {
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
+  }
 });
 
-//
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
 
-//
+//GET request to the main /urls index page
+//If logged in, it will show the URLs beloning to the user -- otherwise an error response will render
 app.get("/urls", (req, res) => {
   const user_Id =  req.session.user_Id;
   const user = users[user_Id];
@@ -44,13 +48,17 @@ app.get("/urls", (req, res) => {
   }
 });
 
-//
+
+//GET request to the register page
+//Render the registration/Create an Account page
 app.get("/register", (req, res) => {
   const templateVars = { urls: urlDatabase, user: null};
   res.render("urls_register", templateVars);
 });
 
-//
+
+//GET Request to login page
+//If logged in, it will redirect to the /urls main index page --- otherwise it will render the login page
 app.get("/login", (req, res) => {
   const user_Id =  req.session.user_Id;
   const user = users[user_Id];
@@ -62,7 +70,9 @@ app.get("/login", (req, res) => {
   }
 });
 
-//
+
+//GET request to create a new shortURL
+//Will only display the page if a user is logged in --- otherwise it will redirect to login page
 app.get("/urls/new", (req, res) => {
   const user_Id =  req.session.user_Id;
   const user = users[user_Id];
@@ -74,7 +84,9 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-//
+
+//GET request to edit longURL
+//If logged in, users can update thier longURLs only if it belongs to them --- otherwise an error page will render
 app.get("/urls/:shortURL", (req, res) => {
   const user_Id =  req.session.user_Id;
   const user = users[user_Id];
@@ -94,22 +106,25 @@ app.get("/urls/:shortURL", (req, res) => {
   }
 });
 
-//
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b><body></html>\n");
-});
 
-//
+//GET request to the shortURL
+//If shortURL exists in the database it will redirect to the longURL --- otherwise an error page will render
 app.get("/u/:shortURL", (req, res) => {
+  let user = users[req.session.user_id];
   const longURL = urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
+  if (urlDatabase[req.params.shortURL]) {
+    res.redirect(longURL);
+  } else {
+    res.render("error_page2", user);
+  }
 });
 
 
 
-//POSTS Requests
+//----------------------------------------------------------POSTS Requests-----------------------------
 
-//Submiting a new longURL and converting it to shortURL
+//POST Request for submiting a new longURL and converting it to shortURL
+//Adds the new longURL and associated shortURL to the urlDatabase and redirects to /urls/:shortURLs page
 app.post("/urls", (req, res) => {
   let user_Id = req.session.user_Id;
   const longURL = req.body.longURL;
@@ -121,7 +136,9 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-//delete
+
+//POST request for deleting a shortURL along with the associated longURL
+//Deletes the shortURL and the longURL from the urlDatabase if it belongs to the user --- otherwise an error page will render
 app.post("/urls/:shortURL/delete", (req, res) => {
   let user_Id = req.session.user_Id;
   const user = users[user_Id];
@@ -136,7 +153,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
-//edit
+
+//POST request to edit/update an existing shortURL with a new longURL
+//Updates the shortURL to the new longURL in the urlDatabase if it belongs to the user --- otherwise an error page will render
 app.post("/urls/:shortURL", (req, res) => {
   let user_Id = req.session.user_Id;
   const user = users[user_Id];
@@ -155,7 +174,10 @@ app.post("/urls/:shortURL", (req, res) => {
   }
 });
 
-//POST Register
+
+//POST Request when a user creates an account
+//If the inputted email address exists in the users database --- an error response will render
+//If the provided email address and password are valid then it will add user to the users database and redirect to the /urls main index page
 app.post("/register", (req, res) => {
   let user_Id = generateRandomString();
   let email = req.body.email;
@@ -174,11 +196,12 @@ app.post("/register", (req, res) => {
 
     req.session.user_Id = user_Id;
     res.redirect("/urls");
-    // console.log(users);
   }
 });
 
-//
+
+//POST Request when a user logs in
+//If the inputted email address and password match with one in the users database then it will redirect to the main /urls index page --- an error resposne will render
 app.post("/login", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
@@ -192,14 +215,17 @@ app.post("/login", (req, res) => {
   }
 });
 
-//
+
+//POST Request when logging out
+//Clear the encrypted cookies and redirect user to the main /urls index page where it will prompt user to login
 app.post("/logout", (req, res) => {
   res.clearCookie("session");
   res.clearCookie("session.sig");
   res.redirect("urls/");
 });
 
-//
+
+//Server listening on the provided PORT
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
