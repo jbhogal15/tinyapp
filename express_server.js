@@ -121,7 +121,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 
 
-//----------------------------------------------------------POSTS Requests-----------------------------
+//----------------------------------POST REQUESTS---------------------------------------
 
 //POST Request for submiting a new longURL and converting it to shortURL
 //Adds the new longURL and associated shortURL to the urlDatabase and redirects to /urls/:shortURLs page
