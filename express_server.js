@@ -40,6 +40,7 @@ const users = {
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const e = require("express");
+const bcrypt = require("bcrypt");
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -90,10 +91,12 @@ const urlsForUser = function(userId, database) {
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
+
 //
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+
 //
 app.get("/urls", (req, res) => {
   const user_id =  req.cookies["user_id"];
@@ -106,11 +109,13 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
    }
 });
+
 //
 app.get("/register", (req, res) => {
   const templateVars = { urls: urlDatabase, user: null};
   res.render("urls_register", templateVars);
 });
+
 //
 app.get("/login", (req, res) => {
   const user_id =  req.cookies["user_id"];
@@ -122,6 +127,7 @@ app.get("/login", (req, res) => {
   res.render("login_page", templateVars);
   }
 });
+
 //
 app.get("/urls/new", (req, res) => {
   const user_id =  req.cookies["user_id"];
@@ -133,6 +139,7 @@ app.get("/urls/new", (req, res) => {
     res.render("login_page", templateVars);
   }
 });
+
 //
 app.get("/urls/:shortURL", (req, res) => {
   const user_id =  req.cookies["user_id"];
@@ -242,20 +249,29 @@ app.post("/login", (req, res) => {
     let user_id = getUserId(email, users);
     res.cookie("user_id", user_id);
     res.redirect("/urls");
-    // console.log(users);
   }
-  // const user_id =  req.cookies["user_id"];
-  // res.cookie("user_id", user_id);
-  // res.redirect("/urls");
 });
 
+app.post("/login", (req, res) => {
+  let email = req.body.email;
+  let password = req.body.password;
+  let user_id = getUserId(email, users);
+  if (user_id && bcrypt.compareSync(password, users["user_id"].password)) {
+    res.cookie("user_id", user_id);
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("Invalid username and/or password")
+  }
+})
+
+//
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("urls/");
 });
 
+//
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-// http%3A%2F%2Fgoogle.com  
