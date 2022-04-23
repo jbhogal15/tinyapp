@@ -1,7 +1,4 @@
-// const generateRandomString = () => {
-//   return Math.random().toString(36).substring(6);
-// };
-
+//app configurations
 const express = require("express");
 const app = express();
 const PORT = 8080;
@@ -11,58 +8,17 @@ const bodyParser = require("body-parser");
 const e = require("express");
 const bcrypt = require("bcryptjs");
 const cookieSession = require("cookie-session");
-
-//Helper Functions
-const { generateRandomString, emailUser, userPassword, getUserByEmail, urlsForUser } = require('./helpers');
-
 app.set("view engine", "ejs");
-
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: "session",
   keys: ["Fear is a tool, when that light hits the sky, it's not just a call, it's a warning!"]
 }));
 
+//Helper Functions
+const { generateRandomString, emailUser, userPassword, getUserByEmail, urlsForUser } = require('./helpers');
 
-//Check if email is part of the users databse when logging in or registering
-// const emailUser = function(email, users) {
-//   for (const key in users) {
-//     if (users[key].email === email) {
-//       return true;
-//     }
-//   }
-//   return false;
-// };
 
-// //FInd users password when provided with email address
-// const userPassword = function(email, users) {
-//   for (const key in users) {
-//     if (users[key].email === email) {
-//       return users[key].password;
-//     }
-//   }
-//   return undefined;
-// };
-
-// //Get user_id from email
-// const getUserId = function(email, users) {
-//   for (const key in users) {
-//     if (users[key].email === email) {
-//       return key;
-//     }
-//   }
-// };
-
-// //Returns URLs for user_id
-// const urlsForUser = function(userId, database) {
-//   let userURLs = {};
-//   for (const shortURL in database) {
-//     if (urlDatabase[shortURL].user_Id === userId) {
-//       userURLs[shortURL] = database[shortURL];
-//     }
-//   }
-//   return userURLs;
-// };
 
 
 //GET REQUESTS
