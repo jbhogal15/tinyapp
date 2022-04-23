@@ -3,6 +3,7 @@ const generateRandomString = () => {
   return Math.random().toString(36).substring(6);
 };
 
+
 //Checks if email is part of the users databse when logging in or registering
 const emailUser = function(email, database) {
   for (const key in database) {
@@ -13,7 +14,8 @@ const emailUser = function(email, database) {
   return false;
 };
 
-//Find users password when provided with ab email address
+
+//Find users password when provided with an email address
 const userPassword = function(email, database) {
   for (const key in database) {
     if (database[key].email === email) {
@@ -23,6 +25,7 @@ const userPassword = function(email, database) {
   return undefined;
 };
 
+
 //Get user_id from email
 const getUserByEmail = function(email, database) {
   for (const key in database) {
@@ -31,6 +34,7 @@ const getUserByEmail = function(email, database) {
     }
   }
 };
+
 
 //Returns URLs for user_id
 const urlsForUser = function(userId, database) {
