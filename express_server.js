@@ -162,7 +162,6 @@ app.post("/urls/:shortURL", (req, res) => {
   let newURL = req.body.newURL;
   const shortURL = req.params.shortURL;
   const userURLs = urlsForUser(user_Id, urlDatabase);
-  const templateVars = { urls: userURLs, user: user };
   if (user_Id && user_Id === urlDatabase[shortURL].user_Id) {
     urlDatabase[shortURL] = {
       longURL: newURL,
@@ -170,7 +169,7 @@ app.post("/urls/:shortURL", (req, res) => {
     };
     res.redirect("/urls");
   } else {
-    res.render("error_page3", templateVars);
+    res.status(403).send("your are not permiited to perform this aciton");
   }
 });
 
