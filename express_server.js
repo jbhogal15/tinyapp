@@ -169,7 +169,7 @@ app.post("/urls/:shortURL", (req, res) => {
     };
     res.redirect("/urls");
   } else {
-    res.status(403).send("your are not permiited to perform this aciton");
+    res.status(403).send("your are not permiited to perform this action");
   }
 });
 
@@ -228,4 +228,5 @@ app.post("/logout", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
 
