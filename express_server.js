@@ -22,7 +22,7 @@ const { generateRandomString, emailUser, userPassword, getUserByEmail, urlsForUs
 
 //----------------------------------GET REQUESTS---------------------------------------
 
-//GET request to the root page
+//GET request to the root page!
 //If user is logged in it will redirect to /urls main index page, otherwise it will redirect to login page
 app.get("/", (req, res) => {
   const user_Id = req.session.user_Id;
